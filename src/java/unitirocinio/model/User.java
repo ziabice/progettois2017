@@ -28,7 +28,7 @@ package unitirocinio.model;
  *
  * @author Luca Gambetta
  */
-public abstract class User {
+public abstract class User implements Cloneable {
 
   /**
    * ID univoco dell'utente quando salvato nel database
@@ -207,4 +207,13 @@ public abstract class User {
     this.dataIscrizione = dataIscrizione;
   }
 
+  /**
+   * Permette di clonare l'oggetto
+   * 
+   * @return
+   * @throws CloneNotSupportedException 
+   */
+  public Object clone() throws CloneNotSupportedException {
+    return super.clone();
+  }
 }
