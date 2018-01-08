@@ -879,6 +879,22 @@ public class UserManagerTest {
     assertTrue(error);
     
   }
+  
+  /**
+   * Testa il metodo findLogin con una login inesistente
+   * 
+   * @throws java.lang.Exception
+   */
+  @Test
+  public void testFindByLoginNonEx() throws Exception {
+    System.out.println("findByLoginNonEx");
+
+    UserManager instance = UserManager.getInstance();
+
+    User user = instance.findByLogin("dontexists@example.com");
+    
+    assertNull(user);
+  }
 
   /**
    * Test of encryptPassword method, of class UserManager.
