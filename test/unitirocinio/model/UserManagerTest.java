@@ -37,7 +37,8 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- *
+ * Esegue il testing della classe UserManager.
+ * 
  * @author Luca Gambetta
  */
 public class UserManagerTest {
@@ -307,6 +308,7 @@ public class UserManagerTest {
     UserManager instance = UserManager.getInstance(conn);
     
     // Salva prima l'azienda
+    System.out.println("crea azienda");
     Azienda azienda = new Azienda("foo@bar.com", "foo@bar.com", "123456789", 0L);
     azienda.setPassword( instance.encryptPassword("password") );
     azienda.setNome("John");
@@ -328,10 +330,20 @@ public class UserManagerTest {
     user.setCognome("Doe");
     ((TutorAziendale) user).setTelefono("12345678");
     
-    String[] tabelle_vuote = { "operatori_ufficio_tirocinio", "tutor_aziendali", "studenti"};
-    String[] tabelle_piene = { "aziende", "tutor_aziendali", "utenti"};
+    String[] tabelle_vuote = { "operatori_ufficio_tirocinio", "studenti"};
+    String[] tabelle_piene = { "aziende", "tutor_aziendali" };
     
     eseguiSalvataggio(user, "tutor_aziendale", tabelle_piene, tabelle_vuote );
+    
+    // Verifica che ci siano due utenti
+    System.out.println("Conta utenti");
+    Statement stmt = conn.createStatement();
+    
+    ResultSet rs = stmt.executeQuery("SELECT COUNT(*) as cnt FROM utenti");
+    assertTrue( rs.next() );
+    assertEquals(2L, rs.getLong(1));
+    rs.close();
+    
   }
 
   /**
@@ -855,8 +867,17 @@ public class UserManagerTest {
   public void testFindByLoginNull() throws Exception {
     System.out.println("findByLoginNull");
     
-    User usr_b = UserManager.getInstance(conn).findByLogin( null );
-    assertNull(usr_b);
+    boolean error = false;
+    
+    try {
+      User usr_b = UserManager.getInstance(conn).findByLogin( null );
+    }
+    catch(NullPointerException ex) {
+      error = true;
+    }
+    
+    assertTrue(error);
+    
   }
 
   /**
