@@ -72,6 +72,7 @@ public class OperatoreUfficioTirocinio extends User {
   public OperatoreUfficioTirocinio(String login, String email, String codiceFiscale, Ruolo ruolo, Long id) {
     super(login, email, id);
     this.ruolo = ruolo;
+    this.codiceFiscale = codiceFiscale;
   }
 
   /**

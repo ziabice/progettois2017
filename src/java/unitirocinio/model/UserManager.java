@@ -95,6 +95,8 @@ public class UserManager {
    *
    * @param user l'utente da salvare
    * @return l'utente salvato
+   * @throws java.lang.Exception
+   * @throws java.sql.SQLException
    */
   public User save(User user) throws Exception, SQLException {
     if (conn == null) {
@@ -119,7 +121,7 @@ public class UserManager {
     conn.setAutoCommit(false);
     try {
       
-      // Salva prima le informazioni cumuni
+      // Salva prima le informazioni comuni
       PreparedStatement stmt = conn.prepareStatement(
               "INSERT INTO utenti (data_iscrizione, login, password, email, nome, cognome, tipo_utente) VALUES ( NOW(), ?, ?, ?, ?, ?, ? )",
               Statement.RETURN_GENERATED_KEYS
@@ -154,7 +156,7 @@ public class UserManager {
         stmt2.setLong(1, user.getId() );
         stmt2.setString(2, ((Studente) user).getMatricola());
       } else if(user instanceof OperatoreUfficioTirocinio) {
-        stmt2 = conn.prepareStatement("INSERT INTO studenti (operatore_id, codice_fiscale, ruolo) VALUES (?,?,?)");
+        stmt2 = conn.prepareStatement("INSERT INTO operatori_ufficio_tirocinio (operatore_id, codice_fiscale, ruolo) VALUES (?,?,?)");
         stmt2.setLong(1, user.getId() );
         stmt2.setString(2, ((OperatoreUfficioTirocinio) user).getCodiceFiscale());
         switch( ((OperatoreUfficioTirocinio) user).getRuolo() ) {
@@ -215,6 +217,8 @@ public class UserManager {
       
     }
     catch(SQLException e) {
+      conn.rollback();
+      throw e;
     }
     
     return user;
@@ -228,7 +232,7 @@ public class UserManager {
    */
   public User find(Long id) throws SQLException,Exception {
     if (id == null) {
-      throw new Exception("Invalid ID");
+      throw new NullPointerException();
     }
     
     if (id <= 0) {
@@ -246,8 +250,13 @@ public class UserManager {
    *
    * @param login la stringa di login da cercare
    * @return l'eventuale utente trovato o null se non ha trovato niente
+   * @throws java.sql.SQLException
    */
   public User findByLogin(String login) throws SQLException, Exception {
+    if (login == null) {
+      throw new NullPointerException();
+    }
+    
     PreparedStatement st = conn.prepareStatement("SELECT * FROM utenti WHERE login = ? LIMIT 1");
     st.setString(1, login);
     ResultSet res = st.executeQuery();
@@ -285,16 +294,23 @@ public class UserManager {
           st = conn.prepareStatement("SELECT * from studenti where studente_id = ?");
           st.setLong(1, id);
           res2 = st.executeQuery();
+          if (res2.next()) {
+            user = new Studente(res.getString("login"), res.getString("email"), res2.getString("matricola"), id );
+          } else {
+            throw new Exception("Invalid User");
+          }
           
-          user = new Studente(res.getString("login"), res.getString("email"), res2.getString("matricola"), id );
-        
           break;
         case "operatore":
           st = conn.prepareStatement("SELECT * from operatori_ufficio_tirocinio where operatore_id = ?");
           st.setLong(1, id);
           res2 = st.executeQuery();
+          if (!res2.next()) {
+            throw new Exception("Invalid User");
+          }
+          
           OperatoreUfficioTirocinio.Ruolo r;
-          switch(res.getString("ruolo")) {
+          switch(res2.getString("ruolo")) {
             case "presidente_cons_did": r = OperatoreUfficioTirocinio.Ruolo.PRESIDENTE_CONSIGLIO_DIDATTICO;break;
             case "direttore_dip": r = OperatoreUfficioTirocinio.Ruolo.DIRETTORE_DIPARTIMENTO; break;
             default:
@@ -307,6 +323,9 @@ public class UserManager {
           st = conn.prepareStatement("SELECT * from tutor_accademici where tutor_id = ?");
           st.setLong(1, id);
           res2 = st.executeQuery();
+          if (!res2.next()) {
+            throw new Exception("Invalid User");
+          }
           
           user = new TutorAccademico(res.getString("login"), res.getString("email"), res2.getString("codice_fiscale"), id );
           
@@ -315,8 +334,12 @@ public class UserManager {
           st = conn.prepareStatement("SELECT * from tutor_aziendali where tutor_id = ?");
           st.setLong(1, id);
           res2 = st.executeQuery();
+          if (!res2.next()) {
+            throw new Exception("Invalid User");
+          }
           
           user = new TutorAziendale(res.getString("login"), res.getString("email"), res2.getString("codice_fiscale"), res2.getLong("azienda_id"), id );
+          ((TutorAziendale)user).setTelefono(res2.getString("telefono"));
           
           break;
         case "azienda":
@@ -324,13 +347,18 @@ public class UserManager {
           st.setLong(1, id);
           res2 = st.executeQuery();
           
+          if (!res2.next()) {
+            throw new Exception("Invalid User");
+          }
+          
           user = new Azienda(res.getString("login"), res.getString("email"), res2.getString("partita_iva"), id );
           /*
-  data_convezione DATE NOT NULL,
+            data_convezione DATE NOT NULL,
           */
+          ((Azienda) user).setDataConvenzione( 0L );
           ((Azienda) user).setCittaSedeLegale(res2.getString("citta_sede_legale"));
-          ((Azienda) user).setCognomeRappresentanteLegale(res2.getString("cognome_reppresentante"));
-          ((Azienda) user).setNomeRappresentanteLegale(res2.getString("nome_reppresentante"));
+          ((Azienda) user).setCognomeRappresentanteLegale(res2.getString("cognome_rappresentante"));
+          ((Azienda) user).setNomeRappresentanteLegale(res2.getString("nome_rappresentante"));
           ((Azienda) user).setRifConvenzione(res2.getString("rif_convenzione"));
           ((Azienda) user).setIndirizzoSedeLegale(res2.getString("indirizzo_sede_legale"));
           String stato_convenzione = res2.getString("stato_convenzione");

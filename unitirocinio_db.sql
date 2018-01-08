@@ -62,11 +62,11 @@ DROP TABLE IF EXISTS aziende;
 CREATE TABLE aziende (
   azienda_id INTEGER UNSIGNED PRIMARY KEY REFERENCES utenti(id) ON DELETE CASCADE ON UPDATE CASCADE,
   partita_iva VARCHAR(30) NOT NULL UNIQUE,
-  nome_reppresentante VARCHAR(100) NOT NULL,
-  cognome_reppresentante VARCHAR(100) NOT NULL,
+  nome_rappresentante VARCHAR(100) NOT NULL,
+  cognome_rappresentante VARCHAR(100) NOT NULL,
   stato_convenzione ENUM('attiva','non_attiva') NOT NULL,
   rif_convenzione VARCHAR(30) NOT NULL,
-  data_convezione DATE NOT NULL,
+  data_convenzione DATE NOT NULL,
   indirizzo_sede_legale VARCHAR(100) NOT NULL,
   citta_sede_legale VARCHAR(60) NOT NULL
 );
